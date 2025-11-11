@@ -22,12 +22,18 @@ variable "secret_name" {
   type        = string
 }
 
+variable "project_id" {
+  description = "The GCP Project ID to deploy resources into."
+  type        = string
+}
+
 # 1. Define the Cloud Function Resource
 resource "google_cloudfunctions2_function" "cf_standard" {
   name        = var.function_name
-  location    = "europe-west2" # Use the UK region for compliance/latency
+  project     = var.project_id  # <--- FIX 1: Added this line
+  location    = "europe-west2" 
   description = "Standard secure function deployed via CF_DEPLOY module."
-
+  
   build_config {
     runtime     = "python311"
     entry_point = var.entry_point
@@ -51,15 +57,15 @@ resource "google_cloudfunctions2_function" "cf_standard" {
     secret_environment_variables {
       key       = "CRM_API_KEY"
       secret    = var.secret_name
-      project   = var.project_id
+      project_id = var.project_id  # <--- FIX 2: Corrected 'project' to 'project_id'
       version   = "latest" 
     }
   }
 }
-
 # 2. Define the Dedicated Service Account for this function
 # This enforces the Principle of Least Privilege
 resource "google_service_account" "function_sa" {
   account_id   = "${var.function_name}-sa"
   display_name = "SA for ${var.function_name}"
+  project      = var.project_id
 }
