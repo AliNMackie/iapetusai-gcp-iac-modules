@@ -1,0 +1,38 @@
+{
+  "intent_name": "sales.lead_capture_start",
+  "display_name": "Lead Capture & Qualification",
+  "priority": 100,
+  "training_phrases": [
+    "I want to speak to an advisor",
+    "How can I invest with you?",
+    "Can you tell me about your services?",
+    "I need help with my finances",
+    "Book a consultation",
+    "I'm interested in working with Neish Capital"
+  ],
+  "parameters_to_collect": [
+    {
+      "name": "full_name",
+      "entity_type": "@sys.person",
+      "required": true,
+      "prompt": "Before I connect you, could you please provide your full name?",
+      "message_on_failure": "Sorry, I missed your name. Please provide your full name so our advisor can contact you."
+    },
+    {
+      "name": "email_address",
+      "entity_type": "@sys.email",
+      "required": true,
+      "prompt": "And what is the best email address for our team to reach out to you?",
+      "message_on_failure": "Please provide a valid email address so we can send the information securely."
+    },
+    {
+      "name": "area_of_interest",
+      "entity_type": "@service_interest",
+      "required": false,
+      "prompt": "Lastly, what is your primary area of interest? (e.g., Investment, Advisory, or Compliance)",
+      "message_on_failure": "Thank you, that helps us route you correctly."
+    }
+  ],
+  "fulfillment_webhook": "cf_lead_capture_handler",
+  "final_response": "Thank you, {{full_name}}. Your request has been securely logged. A member of our advisory team will be in contact with you shortly."
+}
