@@ -26,7 +26,6 @@ variable "project_id" {
   description = "The GCP Project ID to deploy resources into."
   type        = string
 }
-
 # 1. Define the Cloud Function Resource
 resource "google_cloudfunctions2_function" "cf_standard" {
   name        = var.function_name
@@ -60,12 +59,54 @@ resource "google_cloudfunctions2_function" "cf_standard" {
       project_id = var.project_id  # <--- FIX 2: Corrected 'project' to 'project_id'
       version   = "latest" 
     }
-  }
-}
-# 2. Define the Dedicated Service Account for this function
-# This enforces the Principle of Least Privilege
+  } # <-- End of service_config
+
+  # Tell the function to wait until the zip file is uploaded
+  # THIS IS THE CORRECT LOCATION
+  depends_on = [
+    google_storage_bucket_object.source_zip
+  ]
+
+} # <-- THIS IS THE FINAL closing brace for the function
 resource "google_service_account" "function_sa" {
   account_id   = "${var.function_name}-sa"
   display_name = "SA for ${var.function_name}"
   project      = var.project_id
+}
+# 3. Define the GCS Bucket to store the function's source code
+resource "google_storage_bucket" "source_bucket" {
+  name          = var.source_bucket
+  project       = var.project_id
+  location      = "EUROPE-WEST2" # Must match the function's region
+  uniform_bucket_level_access = true
+  storage_class = "STANDARD"
+
+  # This makes sure the zip file isn't deleted by accident
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      matches_storage_class = ["STANDARD"]
+    }
+  }
+}
+# 4. Upload the zip file to the GCS Bucket
+resource "google_storage_bucket_object" "source_zip" {
+  name   = "source.zip" # The name of the file in the bucket
+  bucket = google_storage_bucket.source_bucket.name
+  source = "source.zip" # The path to your local zip file
+}
+# 5. Grant the Cloud Build Service Account permission to ACT AS the function's SA
+resource "google_service_account_iam_member" "cf_sa_user" {
+  service_account_id = google_service_account.function_sa.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:546077050389@cloudbuild.gserviceaccount.com"
+}
+# 6. Grant Cloud Run Service Agent permission to ACT AS the function's SA
+# This resolves the final failure to deploy the function to the Cloud Run backend.
+resource "google_service_account_iam_member" "cf_run_sa_user" {
+  service_account_id = google_service_account.function_sa.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:service-546077050389@serverless-robot-prod.iam.gserviceaccount.com"
 }
