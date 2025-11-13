@@ -35,31 +35,31 @@ data "google_project" "current" {
 
 locals {
   # Use the dynamic project number for Service Agent emails
-  project_number       = data.google_project.current.number
-  cloud_build_sa_email = "${local.project_number}@cloudbuild.gserviceaccount.com"
+  project_number              = data.google_project.current.number
+  cloud_build_sa_email        = "${local.project_number}@cloudbuild.gserviceaccount.com"
   # This is the Cloud Run Service Agent, which manages the function's execution environment
   cloud_run_service_agent_email = "service-${local.project_number}@serverless-robot-prod.iam.gserviceaccount.com"
   # Targets the Default Compute Engine SA (needed for the build fix)
-  compute_engine_sa_email = "${local.project_number}-compute@developer.gserviceaccount.com" 
+  compute_engine_sa_email       = "${local.project_number}-compute@developer.gserviceaccount.com"
 }
 
 # --- CRITICAL: 0. Explicit API Enablement (For Repeatability) ---
 # These blocks ensure all required APIs are enabled for every environment (dev/stage/prod)
 resource "google_project_service" "secretmanager_api" {
-  project = var.project_id
-  service = "secretmanager.googleapis.com"
+  project            = var.project_id
+  service            = "secretmanager.googleapis.com"
   disable_on_destroy = false
 }
 
 resource "google_project_service" "cloudbuild_api" {
-  project = var.project_id
-  service = "cloudbuild.googleapis.com"
+  project            = var.project_id
+  service            = "cloudbuild.googleapis.com"
   disable_on_destroy = false
 }
 
 resource "google_project_service" "artifactregistry_api" {
-  project = var.project_id
-  service = "artifactregistry.googleapis.com"
+  project            = var.project_id
+  service            = "artifactregistry.googleapis.com"
   disable_on_destroy = false
 }
 
@@ -98,9 +98,14 @@ resource "google_cloudfunctions2_function" "cf_standard" {
       project_id = var.project_id
       version    = "latest"
     }
-    
-    # Allows external Dialogflow webhooks to reach the function
-    ingress_settings = "ALLOW_ALL" 
+
+    # -----------------------------------------------------------------
+    # MIGRATION UPDATE (Per Playbook v1.1):
+    # Changed from "ALLOW_ALL" (for public webhooks) to "ALLOW_INTERNAL_ONLY".
+    # This secures the function so only internal services with 'roles/cloudfunctions.invoker'
+    # (like our Vertex AI Agent) can call it.
+    ingress_settings = "ALLOW_INTERNAL_ONLY"
+    # -----------------------------------------------------------------
   }
 
   # Dependencies ensure the IAM roles and source code are ready before deployment starts
@@ -122,11 +127,11 @@ resource "google_service_account" "function_sa" {
 
 # --- 3. GCS Source Bucket ---
 resource "google_storage_bucket" "source_bucket" {
-  name                          = var.source_bucket_name
-  project                       = var.project_id
-  location                      = "EUROPE-WEST2"
+  name                        = var.source_bucket_name
+  project                     = var.project_id
+  location                    = "EUROPE-WEST2"
   uniform_bucket_level_access = true
-  storage_class                 = "STANDARD"
+  storage_class               = "STANDARD"
 }
 
 # --- 4. Upload Source Code Zip ---
@@ -145,7 +150,7 @@ resource "google_secret_manager_secret_iam_member" "secret_accessor" {
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.function_sa.email}"
   # DEPENDS on the secret being created first
-  depends_on = [google_secret_manager_secret.crm_api_key_secret] 
+  depends_on = [google_secret_manager_secret.crm_api_key_secret]
 }
 
 # --- 6. IAM: Cloud Build Read Access to GCS Source ---
@@ -189,14 +194,15 @@ resource "google_project_iam_member" "compute_sa_artifact_registry_writer" {
   member  = "serviceAccount:${local.compute_engine_sa_email}"
   depends_on = [google_project_service.artifactregistry_api]
 }
+
 # --- 11. CRITICAL ADDITION: Secret Resource Creation (Final Syntax) ---
 # This block ensures the secret exists before we try to set IAM policy on it (Fixes 404 error).
 resource "google_secret_manager_secret" "crm_api_key_secret" {
   project   = var.project_id
   secret_id = var.secret_name
-  
+
   replication {
-    # Using 'user_managed' replication to bypass the syntax error with 'automatic' 
+    # Using 'user_managed' replication to bypass the syntax error with 'automatic'
     # and explicitly define the secure region (enterprise standard: Section 3.2).
     user_managed {
       replicas {
