@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Admin Portal - Secure CMS</title>
+    
+    <script src="/__/firebase/9.23.0/firebase-app-compat.js"></script>
+    <script src="/__/firebase/9.23.0/firebase-auth-compat.js"></script>
+    <script src="/__/firebase/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <script src="/__/firebase/init.js"></script>
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; background-color: #f4f4f5; color: #333; }
+        .container { background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 2rem; max-width: 500px; margin: 50px auto; }
+        h2, h3, h4 { color: #1a73e8; }
+        button { background-color: #4285F4; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-size: 16px; cursor: pointer; transition: background-color 0.3s; }
+        button:hover { background-color: #357ae8; }
+        #logout-btn { background-color: #d9534f; }
+        #logout-btn:hover { background-color: #c9302c; }
+        .error { color: #d93025; font-weight: bold; }
+        #admin-content { display: none; } /* Hidden by default */
+        ul { list-style: none; padding-left: 0; }
+        li { background: #eee; padding: 8px; margin-bottom: 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div id="login-container">
+            <h2>Admin Portal Login</h2>
+            <p>Please sign in with your authorized Google account to manage the chatbot.</p>
+            <button id="google-login-btn">Sign in with Google</button>
+            <p class="error" id="error-message"></p>
+        </div>
+
+        <div id="admin-content">
+            <h3>Welcome, <span id="user-email"></span></h3>
+            <p>✅ **ACCESS GRANTED.** You can now securely manage the chatbot content.</p>
+            
+            <hr>
+            
+            <h4>Knowledge Base CMS (Sprint 2)</h4>
+            <p>This area will contain the tools to update the bot's knowledge base, as defined in the Playbook (Section 6.1.1).</p>
+            
+            <hr>
+
+            <h4>Chat Logs (Audit Trail)</h4>
+            <p>This section will allow you to view the PII-sensitive chat logs, as per your Firestore security rules (Rule 1B).</p>
+            <button id="load-logs-btn">Load Last 5 Chat Logs</button>
+            <ul id="log-list"></ul>
+            
+            <hr>
+            <button id="logout-btn">Sign out</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
