@@ -1,0 +1,5 @@
+# requirements.txt (Corrected Version)
+functions-framework
+google-cloud-firestore
+google-cloud-aiplatform
+thefuzz

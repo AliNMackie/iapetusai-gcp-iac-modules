@@ -13,16 +13,27 @@
 
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; background-color: #f4f4f5; color: #333; }
-        .container { background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 2rem; max-width: 500px; margin: 50px auto; }
+        .container { background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 2rem; max-width: 700px; margin: 50px auto; }
         h2, h3, h4 { color: #1a73e8; }
         button { background-color: #4285F4; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-size: 16px; cursor: pointer; transition: background-color 0.3s; }
         button:hover { background-color: #357ae8; }
-        #logout-btn { background-color: #d9534f; }
+        #logout-btn { background-color: #d9534f; float: right; }
         #logout-btn:hover { background-color: #c9302c; }
-        .error { color: #d93025; font-weight: bold; }
+        .error { color: #d95302; font-weight: bold; }
         #admin-content { display: none; } /* Hidden by default */
+        
+        /* Form styling */
+        input[type="text"], textarea { width: 95%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        textarea { height: 80px; }
+
+        /* Log/KB List styling */
         ul { list-style: none; padding-left: 0; }
-        li { background: #eee; padding: 8px; margin-bottom: 5px; border-radius: 4px; }
+        li { background: #eee; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        li button { background-color: #db4437; font-size: 12px; padding: 5px 10px; }
+        li button:hover { background-color: #c53727; }
+        li .content { flex-grow: 1; }
+        li .content strong { color: #333; }
+        li .content p { margin: 5px 0 0; color: #555; }
     </style>
 </head>
 <body>
@@ -37,23 +48,35 @@
         </div>
 
         <div id="admin-content">
-            <h3>Welcome, <span id="user-email"></span></h3>
+            <button id="logout-btn">Sign out</button>
+            <h2>Welcome, <span id="user-email"></span>!</h2>
             <p>✅ **ACCESS GRANTED.** You can now securely manage the chatbot content.</p>
             
             <hr>
             
-            <h4>Knowledge Base CMS (Sprint 2)</h4>
-            <p>This area will contain the tools to update the bot's knowledge base, as defined in the Playbook (Section 6.1.1).</p>
+            <h4>Knowledge Base CMS</h4>
+            <p>Add, edit, or remove Q&A pairs for the chatbot. This content is stored in the `/knowledge-base` Firestore collection.</p>
             
+            <form id="kb-form">
+                <label for="kb-question"><b>Question:</b></label>
+                <input type="text" id="kb-question" placeholder="e.g., What are your business hours?" required>
+                
+                <label for="kb-answer"><b>Answer:</b></label>
+                <textarea id="kb-answer" placeholder="e.g., We are open M-F, 8:30 AM to 5:00 PM." required></textarea>
+                
+                <button type="submit">Add New Entry</button>
+                <button type="button" id="refresh-kb-btn">Refresh List</button>
+            </form>
+            
+            <div id="kb-list-container">
+                <h4>Current Knowledge Base Entries:</h4>
+                <ul id="kb-list"></ul>
+            </div>
             <hr>
-
             <h4>Chat Logs (Audit Trail)</h4>
-            <p>This section will allow you to view the PII-sensitive chat logs, as per your Firestore security rules (Rule 1B).</p>
+            <p>This section allows you to view the PII-sensitive chat logs, as per your Firestore security rules (Rule 1B)[cite: 270].</p>
             <button id="load-logs-btn">Load Last 5 Chat Logs</button>
             <ul id="log-list"></ul>
-            
-            <hr>
-            <button id="logout-btn">Sign out</button>
         </div>
     </div>
 
