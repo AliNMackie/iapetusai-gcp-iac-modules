@@ -1,7 +1,7 @@
 {
   "version": 4,
   "terraform_version": "1.13.5",
-  "serial": 173,
+  "serial": 163,
   "lineage": "b3d86566-f8a3-fb01-b86f-77c6dc03f273",
   "outputs": {
     "function_sa_unique_id": {
@@ -20,7 +20,7 @@
           "schema_version": 0,
           "attributes": {
             "auto_create_network": null,
-            "billing_account": null,
+            "billing_account": "014692-F53305-355B81",
             "deletion_policy": "PREVENT",
             "effective_labels": {
               "firebase": "enabled",
@@ -187,56 +187,6 @@
     },
     {
       "mode": "managed",
-      "type": "google_dialogflow_cx_agent",
-      "name": "chatbot_agent",
-      "provider": "provider[\"registry.terraform.io/hashicorp/google-beta\"]",
-      "instances": [
-        {
-          "schema_version": 0,
-          "attributes": {
-            "advanced_settings": [
-              {
-                "audio_export_gcs_destination": [],
-                "dtmf_settings": [],
-                "logging_settings": [
-                  {
-                    "enable_consent_based_redaction": false,
-                    "enable_interaction_logging": false,
-                    "enable_stackdriver_logging": true
-                  }
-                ],
-                "speech_settings": []
-              }
-            ],
-            "avatar_uri": "",
-            "default_language_code": "en",
-            "delete_chat_engine_on_destroy": false,
-            "description": "",
-            "display_name": "Industrialized Chatbot Agent",
-            "enable_spell_correction": false,
-            "enable_stackdriver_logging": null,
-            "gen_app_builder_settings": [],
-            "git_integration_settings": [],
-            "id": "projects/iai-chatbot-1/locations/europe-west2/agents/d1c71c19-e958-4fa3-899a-cea2b972409a",
-            "location": "europe-west2",
-            "name": "d1c71c19-e958-4fa3-899a-cea2b972409a",
-            "project": "iai-chatbot-1",
-            "security_settings": "",
-            "speech_to_text_settings": [],
-            "start_flow": "projects/iai-chatbot-1/locations/europe-west2/agents/d1c71c19-e958-4fa3-899a-cea2b972409a/flows/00000000-0000-0000-0000-000000000000",
-            "supported_language_codes": [],
-            "text_to_speech_settings": [],
-            "time_zone": "Europe/London",
-            "timeouts": null
-          },
-          "sensitive_attributes": [],
-          "identity_schema_version": 0,
-          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoyNDAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MjQwMDAwMDAwMDAwMH19"
-        }
-      ]
-    },
-    {
-      "mode": "managed",
       "type": "google_firebaserules_release",
       "name": "primary",
       "provider": "provider[\"registry.terraform.io/hashicorp/google-beta\"]",
@@ -316,7 +266,7 @@
           "schema_version": 0,
           "attributes": {
             "condition": [],
-            "etag": "BwZD5GoYEFk=",
+            "etag": "BwZD5ETITqs=",
             "id": "iai-chatbot-1/roles/artifactregistry.writer/serviceAccount:546077050389@cloudbuild.gserviceaccount.com",
             "member": "serviceAccount:546077050389@cloudbuild.gserviceaccount.com",
             "project": "iai-chatbot-1",
@@ -342,7 +292,7 @@
           "schema_version": 0,
           "attributes": {
             "condition": [],
-            "etag": "BwZD5GoYEFk=",
+            "etag": "BwZD5ETITqs=",
             "id": "iai-chatbot-1/roles/artifactregistry.writer/serviceAccount:546077050389-compute@developer.gserviceaccount.com",
             "member": "serviceAccount:546077050389-compute@developer.gserviceaccount.com",
             "project": "iai-chatbot-1",
@@ -618,7 +568,7 @@
       "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
       "instances": [
         {
-          "schema_version": 3,
+          "schema_version": 4,
           "attributes": {
             "autoclass": [],
             "cors": [],
@@ -669,33 +619,7 @@
           },
           "sensitive_attributes": [],
           "identity_schema_version": 0,
-          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsInJlYWQiOjI0MDAwMDAwMDAwMCwidXBkYXRlIjoyNDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjMifQ=="
-        }
-      ]
-    },
-    {
-      "mode": "managed",
-      "type": "google_storage_bucket_iam_member",
-      "name": "cloudbuild_gcs_reader",
-      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
-      "instances": [
-        {
-          "schema_version": 0,
-          "attributes": {
-            "bucket": "b/iai-chatbot-1-cf-source-code",
-            "condition": [],
-            "etag": "CAU=",
-            "id": "b/iai-chatbot-1-cf-source-code/roles/storage.objectViewer/serviceAccount:546077050389@cloudbuild.gserviceaccount.com",
-            "member": "serviceAccount:546077050389@cloudbuild.gserviceaccount.com",
-            "role": "roles/storage.objectViewer"
-          },
-          "sensitive_attributes": [],
-          "identity_schema_version": 0,
-          "private": "bnVsbA==",
-          "dependencies": [
-            "data.google_project.current",
-            "google_storage_bucket.source_bucket"
-          ]
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsInJlYWQiOjI0MDAwMDAwMDAwMCwidXBkYXRlIjoyNDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjQifQ=="
         }
       ]
     },
@@ -721,13 +645,13 @@
             "detect_md5hash": "L44jJzy3FZFeDYsfvY47PA==",
             "event_based_hold": false,
             "force_empty_content_type": null,
-            "generation": 1763500089380282,
+            "generation": 1763390305785188,
             "id": "iai-chatbot-1-cf-source-code-source.zip",
             "kms_key_name": "",
             "md5hash": "L44jJzy3FZFeDYsfvY47PA==",
             "md5hexhash": "2f8e23273cb715915e0d8b1fbd8e3b3c",
-            "media_link": "https://storage.googleapis.com/download/storage/v1/b/iai-chatbot-1-cf-source-code/o/source.zip?generation=1763500089380282\u0026alt=media",
-            "metadata": null,
+            "media_link": "https://storage.googleapis.com/download/storage/v1/b/iai-chatbot-1-cf-source-code/o/source.zip?generation=1763390305785188\u0026alt=media",
+            "metadata": {},
             "name": "source.zip",
             "output_name": "source.zip",
             "retention": [],

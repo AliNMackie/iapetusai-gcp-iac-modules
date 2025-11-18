@@ -1,42 +1,41 @@
-// Firestore Security Rules - Appendix C Standard
-// Purpose: Enforce the Principle of Least Privilege and GDPR Compliance.
-// All data remains client-hosted (in their GCP account).
-// NOTE: Replace "BOT_SERVICE_ACCOUNT_UID" with the actual UID of your Cloud Function Service Account.
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 1. --- CHAT LOGS COLLECTION ---
-    // Mandatory for Compliance/Audit Trail. Stores every user interaction.
-    match /chat-logs/{logId} {
-      // RULE 1A: Only the Bot Service Account can CREATE a new log entry.
-      // This prevents anonymous or external sources from inserting fake data.
-      allow create: if request.auth.uid == "BOT_SERVICE_ACCOUNT_UID";
+    // Finalized Rules: UID 118035591324285787496 is the Cloud Function Service Account.
 
-      // RULE 1B: Only Authenticated Admins (checked via the 'admins' collection) can READ logs.
-      // Logs are PII-sensitive and cannot be publicly read.
+    // 1. --- CHAT LOGS COLLECTION ---
+    // Mandatory for Compliance/Audit Trail (Section 3.5.2).
+    match /chat-logs/{logId} {
+      
+      // RULE 1A: Only the Bot Service Account can CREATE a new log entry.
+      // This enforces the Principle of Least Privilege.
+      allow create: if request.auth.uid == "118035591324285787496";
+
+      // RULE 1B: Only Authenticated Admins can READ logs (Appendix C).
       allow read: if request.auth.uid != null &&
                    exists(/databases/$(database)/documents/admins/$(request.auth.uid));
 
-      // RULE 1C: No one can manually UPDATE or DELETE a chat log. (Must be automated for GDPR).
+      // RULE 1C: No one can manually UPDATE or DELETE a chat log. (Immutability for auditing).
       allow update, delete: if false; 
     }
 
     // 2. --- CLIENT KNOWLEDGE BASE (CMS) ---
-    // Stores content the client manages (e.g., FAQs, Policy Summaries).
+    // Stores content the client manages (Section 6.1.1).
     match /knowledge-base/{docId} {
+      
       // RULE 2A: Authenticated Admins can manage (read/write/update) the content.
       allow read, write: if request.auth.uid != null &&
                          exists(/databases/$(database)/documents/admins/$(request.auth.uid));
 
-      // RULE 2B: The Bot Service Account can ONLY READ the knowledge base to generate grounded answers.
-      allow read: if request.auth.uid == "BOT_SERVICE_ACCOUNT_UID";
+      // RULE 2B: The Bot Service Account can ONLY READ the knowledge base for grounded answers.
+      allow read: if request.auth.uid == "118035591324285787496";
     }
 
     // 3. --- ADMIN USERS COLLECTION ---
     // Stores a list of UIDs allowed to access the CMS and Dashboard.
     match /admins/{adminId} {
+      
       // RULE 3A: Only existing admins can read/write this list (to manage other admins).
       allow read, write: if request.auth.uid != null &&
                          exists(/databases/$(database)/documents/admins/$(request.auth.uid));

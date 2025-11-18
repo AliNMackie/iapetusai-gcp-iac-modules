@@ -1,9 +1,9 @@
-# --- File: agent_app/agent.py ---
+# --- File: adk/agent.py ---
 # This is your complete agent definition file.
 
 # --- 1. CORRECT IMPORTS ---
 from google.adk.agents.llm_agent import Agent
-from google.adk.tools import BaseTool # <-- This is correct.
+from google.adk.tools import BaseTool 
 
 # --- 2. Define the "Lead Capture" Tool (as a dictionary) ---
 lead_capture_tool_dict = {
@@ -26,11 +26,12 @@ lead_capture_tool_dict = {
             "required": False
         }
     },
-    
+
     # 3. CRITICAL: Connect the fulfillment to your Cloud Function
     "fulfillment": {
         "type": "CLOUD_FUNCTION",
-        "tool_name": "lead-capture-handler" # This MUST match your 'function_name' in terraform.tfvars
+        # This name MUST match the 'function_name' variable in your Terraform
+        "tool_name": "lead-capture-handler" 
     }
 }
 
@@ -64,3 +65,4 @@ root_agent = Agent(
 
     tools=[lead_capture_tool]
 )
+    

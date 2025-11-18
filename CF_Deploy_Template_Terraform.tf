@@ -63,6 +63,13 @@ resource "google_project_service" "artifactregistry_api" {
   disable_on_destroy = false
 }
 
+# 🔥 NEW RESOURCE: Firestore API Enablement (Prerequisite for rules)
+resource "google_project_service" "firestore_api" {
+  project            = var.project_id
+  service            = "firestore.googleapis.com"
+  disable_on_destroy = false
+}
+
 # --- 1. Cloud Function Deployment ---
 resource "google_cloudfunctions2_function" "cf_standard" {
   name        = var.function_name
@@ -91,7 +98,6 @@ resource "google_cloudfunctions2_function" "cf_standard" {
     service_account_email = google_service_account.function_sa.email
 
     # Grant the function access to pull the secret from Secret Manager
-    # This securely injects the API key into the function's environment (Section 3.5.1)
     secret_environment_variables {
       key        = "CRM_API_KEY"
       secret     = var.secret_name
@@ -99,39 +105,36 @@ resource "google_cloudfunctions2_function" "cf_standard" {
       version    = "latest"
     }
 
-    # -----------------------------------------------------------------
-    # MIGRATION UPDATE (Per Playbook v1.1):
-    # Changed from "ALLOW_ALL" (for public webhooks) to "ALLOW_INTERNAL_ONLY".
-    # This secures the function so only internal services with 'roles/cloudfunctions.invoker'
-    # (like our Vertex AI Agent) can call it.
+    # Restrict ingress to internal services (like the Vertex AI Agent Engine)
     ingress_settings = "ALLOW_INTERNAL_ONLY"
-    # -----------------------------------------------------------------
   }
 
-  # Dependencies ensure the IAM roles and source code are ready before deployment starts
   depends_on = [
     google_storage_bucket_object.source_zip,
     google_storage_bucket_iam_member.cloudbuild_gcs_reader,
-    google_project_iam_member.cloudbuild_artifact_registry_writer, # Dependency on Fix 9
-    google_project_iam_member.compute_sa_artifact_registry_writer  # Dependency on Fix 10
+    google_project_iam_member.cloudbuild_artifact_registry_writer, 
+    google_project_iam_member.compute_sa_artifact_registry_writer  
   ]
 }
 
 # --- 2. Function's Dedicated Service Account (SA) ---
-# Enforces Principle of Least Privilege (Section 3.3)
 resource "google_service_account" "function_sa" {
   account_id   = "${var.function_name}-sa"
   display_name = "SA for ${var.function_name}"
   project      = var.project_id
 }
+output "function_sa_unique_id" {
+  description = "The unique numerical ID used for Firestore Security Rules."
+  value       = google_service_account.function_sa.unique_id
+}
 
 # --- 3. GCS Source Bucket ---
 resource "google_storage_bucket" "source_bucket" {
-  name                        = var.source_bucket_name
-  project                     = var.project_id
-  location                    = "EUROPE-WEST2"
+  name                      = var.source_bucket_name
+  project                   = var.project_id
+  location                  = "EUROPE-WEST2"
   uniform_bucket_level_access = true
-  storage_class               = "STANDARD"
+  storage_class             = "STANDARD"
 }
 
 # --- 4. Upload Source Code Zip ---
@@ -143,18 +146,15 @@ resource "google_storage_bucket_object" "source_zip" {
 
 
 # --- 5. IAM: Function SA -> Secret Manager Access (Allows Runtime Access) ---
-# CRITICAL: This is what allows the Cloud Function to fetch the CRM_API_KEY at runtime.
 resource "google_secret_manager_secret_iam_member" "secret_accessor" {
   project   = var.project_id
   secret_id = var.secret_name
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.function_sa.email}"
-  # DEPENDS on the secret being created first
   depends_on = [google_secret_manager_secret.crm_api_key_secret]
 }
 
 # --- 6. IAM: Cloud Build Read Access to GCS Source ---
-# CRITICAL: Allows the deployment process (Cloud Build SA) to read the source code from GCS.
 resource "google_storage_bucket_iam_member" "cloudbuild_gcs_reader" {
   bucket = google_storage_bucket.source_bucket.name
   role   = "roles/storage.objectViewer"
@@ -162,7 +162,6 @@ resource "google_storage_bucket_iam_member" "cloudbuild_gcs_reader" {
 }
 
 # --- 7. IAM: Cloud Build SA -> Function SA (Allows Deployment) ---
-# Allows Cloud Build (the deployer) to use the new Service Account (function_sa)
 resource "google_service_account_iam_member" "cf_sa_user" {
   service_account_id = google_service_account.function_sa.name
   role               = "roles/iam.serviceAccountUser"
@@ -170,7 +169,6 @@ resource "google_service_account_iam_member" "cf_sa_user" {
 }
 
 # --- 8. IAM: Cloud Run Service Agent -> Function SA (Allows Execution) ---
-# Allows the underlying Cloud Run/Serverless environment to run the function as its SA
 resource "google_service_account_iam_member" "cf_run_sa_user" {
   service_account_id = google_service_account.function_sa.name
   role               = "roles/iam.serviceAccountUser"
@@ -178,7 +176,6 @@ resource "google_service_account_iam_member" "cf_run_sa_user" {
 }
 
 # --- 9. FIX: IAM for Artifact Registry (Cloud Build SA) ---
-# Grants the Artifact Registry Writer role to the *dedicated* Cloud Build SA.
 resource "google_project_iam_member" "cloudbuild_artifact_registry_writer" {
   project = var.project_id
   role    = "roles/artifactregistry.writer"
@@ -187,7 +184,6 @@ resource "google_project_iam_member" "cloudbuild_artifact_registry_writer" {
 }
 
 # --- 10. FIX: IAM for Artifact Registry (Compute Engine SA) ---
-# This targets the Default Compute Engine SA, resolving the build failure error code 13.
 resource "google_project_iam_member" "compute_sa_artifact_registry_writer" {
   project = var.project_id
   role    = "roles/artifactregistry.writer"
@@ -196,20 +192,42 @@ resource "google_project_iam_member" "compute_sa_artifact_registry_writer" {
 }
 
 # --- 11. CRITICAL ADDITION: Secret Resource Creation (Final Syntax) ---
-# This block ensures the secret exists before we try to set IAM policy on it (Fixes 404 error).
 resource "google_secret_manager_secret" "crm_api_key_secret" {
   project   = var.project_id
   secret_id = var.secret_name
 
   replication {
-    # Using 'user_managed' replication to bypass the syntax error with 'automatic'
-    # and explicitly define the secure region (enterprise standard: Section 3.2).
     user_managed {
       replicas {
         location = "europe-west2"
       }
     }
   }
-  # Ensures the Secret Manager API is enabled first
   depends_on = [google_project_service.secretmanager_api]
 }
+
+# -----------------------------------------------------------------
+# 🔥 FINAL CORRECT RESOURCE: Deploys Firestore Document Security Rules
+# This uses the google_firebaserules_ruleset resource.
+resource "google_firebaserules_ruleset" "firestore_rules" {
+  # This requires the google-beta provider
+  provider = google-beta
+  project  = var.project_id
+
+  source {
+    files {
+      name    = "firestore.rules"
+      content = file("Firestore_Security_Rules_Template.txt")
+    }
+  }
+  depends_on = [google_project_service.firestore_api]
+}
+
+# This releases the ruleset to the Firestore service
+resource "google_firebaserules_release" "primary" {
+  provider     = google-beta
+  project      = var.project_id
+  name         = "cloud.firestore" # Magic name required for Firestore
+  ruleset_name = google_firebaserules_ruleset.firestore_rules.name
+}
+# -----------------------------------------------------------------

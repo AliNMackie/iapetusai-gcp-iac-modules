@@ -1,15 +1,17 @@
-# --- File: versions.tf (CORRECT CONTENT) ---
-
+# versions.tf
 terraform {
+  required_version = ">= 1.0"
+  
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 5.0.0"
+      # Explicitly pin to the highest available v6 version.
+      version = "6.50.0" 
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = ">= 5.0.0"
+      # Pin this one too for consistency.
+      version = "6.50.0" 
     }
   }
 }
-# Everything else must be deleted from this file!
